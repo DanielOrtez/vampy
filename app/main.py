@@ -4,9 +4,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from sqlalchemy import text
 
 from app.core import database
 from app.core.config import get_settings
+from app.core.database import AsyncSessionDep
 
 
 @asynccontextmanager
@@ -40,9 +42,10 @@ def create_app() -> FastAPI:
             allow_headers=["*"],
         )
 
-    @api.get("/")
-    def read_root():
-        return {"Hello": "world!"}
+    @api.get("/ready")
+    async def read_root(session: AsyncSessionDep):
+        await session.execute(text("SELECT 1"))
+        return {"status": "ready!"}
 
     return api
 

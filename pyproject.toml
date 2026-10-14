@@ -19,6 +19,9 @@ dev = [
     "ty>=0.0.86",
 ]
 
+[tool.ruff]
+exclude = ["**/versions/**"]
+
 [tool.ruff.lint]
 ignore = ["E501", "B008"]
 fixable = ["ALL"]

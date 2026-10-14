@@ -4,9 +4,10 @@ from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.mixins import TimeStampedModelMixin
 
 
-class User(Base):
+class User(TimeStampedModelMixin, Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(
