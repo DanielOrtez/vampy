@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from sqlalchemy import text
 
+from app.api import main_router
 from app.core import database
 from app.core.config import get_settings
 from app.core.database import AsyncSessionDep
@@ -46,6 +47,8 @@ def create_app() -> FastAPI:
     async def read_root(session: AsyncSessionDep):
         await session.execute(text("SELECT 1"))
         return {"status": "ready!"}
+
+    api.include_router(main_router)
 
     return api
 
