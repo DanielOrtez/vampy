@@ -10,9 +10,9 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        primary_key=True, server_default=func.uuidv7(monotonic=True)
+        primary_key=True, server_default=func.uuidv7(monotonic=True), index=True
     )
-    email: Mapped[str] = mapped_column(unique=True)
+    email: Mapped[str] = mapped_column(unique=True, index=True)
     password: Mapped[str]
 
     def __repr__(self) -> str:
