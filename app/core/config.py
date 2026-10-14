@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import AnyHttpUrl, computed_field
+from pydantic import AnyHttpUrl, Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,8 +38,10 @@ class Settings(BaseSettings):
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
 
-    secret_key: str
-    algorithm: str = "HS256"
+    secret_key: str = Field(..., min_length=32)  # It's also used as JWT secret key
+    algorithm: str = "HS256"  # jwt algorithm
+    access_token_minutes: int = 15
+    refresh_token_days: int = 15
 
     allowed_hosts: list[AnyHttpUrl] = []
 
