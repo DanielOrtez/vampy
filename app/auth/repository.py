@@ -39,10 +39,11 @@ class AuthRepository(BaseRepository[RefreshToken]):
             .where(RefreshToken.id == token_id)
             .where(RefreshToken.revoked_at.is_(None))
             .values(revoked_at=datetime.now(UTC))
+            .returning(RefreshToken.id)
         )
         result = await self.session.execute(stmt)
         await self.session.commit()
-        return result.all().count == 1
+        return result.scalar_one_or_none() is not None
 
     async def revoke_refresh_token_family(self, family_id: uuid.UUID) -> None:
         stmt = (

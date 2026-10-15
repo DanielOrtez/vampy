@@ -2,7 +2,6 @@ import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from fastapi import Response
 from jwt import PyJWTError
 from pydantic import EmailStr
 
@@ -51,16 +50,10 @@ class AuthService:
 
         return user
 
-    async def logout(
-        self, response: Response, refresh_token: str | None = None
-    ) -> None:
+    async def logout(self, refresh_token: str | None = None) -> None:
         token = await self._manage_refresh(refresh_token)
 
         await self.repository.revoke_refresh_token_family(token.family_id)
-        response.delete_cookie(
-            "refresh_token",
-            path=f"{self.settings.api_v1_prefix}{self.settings.api_v1_auth_prefix}",
-        )
 
     async def refresh_token(self, refresh_token: str | None = None) -> Tokens:
         token = await self._manage_refresh(refresh_token)
@@ -73,18 +66,6 @@ class AuthService:
         return await self._issue_tokens(
             user_id=token.user_id, family_id=token.family_id
         )
-
-    def build_response(self, tokens: Tokens, response: Response) -> AccessToken:
-        response.set_cookie(
-            "refresh_token",
-            tokens.refresh_token,
-            httponly=True,
-            secure=self.settings.is_production,
-            samesite="strict",
-            max_age=self.settings.refresh_token_days * 24 * 60 * 60,
-            path=f"{self.settings.api_v1_prefix}{self.settings.api_v1_auth_prefix}",
-        )
-        return tokens.access_token
 
     async def _manage_refresh(self, refresh_token: str | None = None) -> RefreshToken:
         if not refresh_token:
