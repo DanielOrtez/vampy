@@ -40,6 +40,14 @@ class JWTHelper:
             payload, self.settings.secret_key, algorithm=self.settings.algorithm
         )
 
+    def decode_access_token(self, token: str) -> dict:
+        return jwt.decode(
+            token,
+            self.settings.secret_key,
+            [self.settings.algorithm],
+            leeway=self.settings.leeway_seconds,
+        )
+
     def create_refresh_token(self) -> str:
         return token_urlsafe(32)
 

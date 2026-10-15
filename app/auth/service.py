@@ -36,10 +36,15 @@ class AuthService:
         token = await self.repository.get_by_hash(
             self.jwt.hash_refresh_token(refresh_token)
         )
-        if not token or token.expires_at < datetime.now(UTC):
+        now = datetime.now(UTC)
+
+        if not token or token.expires_at < now:
             raise InvalidRefreshToken()
 
-        if token.revoked_at:
+        if (
+            token.revoked_at
+            and token.revoked_at + timedelta(seconds=self.settings.leeway_seconds) < now
+        ):
             await self.repository.revoke_refresh_token_family(token.family_id)
             raise InvalidRefreshToken()
 

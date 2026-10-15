@@ -42,6 +42,7 @@ class Settings(BaseSettings):
 
     secret_key: str = Field(..., min_length=32)  # It's also used as JWT secret key
     algorithm: str = "HS256"  # jwt algorithm
+    leeway_seconds: int = 10
     access_token_minutes: int = 15
     refresh_token_days: int = 15
 
