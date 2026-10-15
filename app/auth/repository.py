@@ -33,14 +33,16 @@ class AuthRepository(BaseRepository[RefreshToken]):
         refresh_token = await self.create(token)
         return refresh_token.token_hash
 
-    async def revoke_refresh_token(self, token_id: uuid.UUID) -> None:
+    async def revoke_refresh_token(self, token_id: uuid.UUID) -> bool:
         stmt = (
             update(RefreshToken)
             .where(RefreshToken.id == token_id)
+            .where(RefreshToken.revoked_at.is_(None))
             .values(revoked_at=datetime.now(UTC))
         )
-        await self.session.execute(stmt)
+        result = await self.session.execute(stmt)
         await self.session.commit()
+        return result.all().count == 1
 
     async def revoke_refresh_token_family(self, family_id: uuid.UUID) -> None:
         stmt = (

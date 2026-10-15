@@ -64,11 +64,11 @@ class AuthService:
 
     async def refresh_token(self, refresh_token: str | None = None) -> Tokens:
         token = await self._manage_refresh(refresh_token)
-        if token.revoked_at:
+        valid = await self.repository.revoke_refresh_token(token.id)
+
+        if not valid:
             await self.repository.revoke_refresh_token_family(token.family_id)
             raise InvalidRefreshToken()
-
-        await self.repository.revoke_refresh_token(token.id)
 
         return await self._issue_tokens(
             user_id=token.user_id, family_id=token.family_id
