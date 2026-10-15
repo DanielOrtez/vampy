@@ -14,7 +14,7 @@ from app.users.service import UserService
 
 settings = get_settings()
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.api_v1_prefix}/{settings.api_v1_auth_prefix}/login"
+    tokenUrl=f"{settings.api_v1_prefix}{settings.api_v1_auth_prefix}/login"
 )
 
 
