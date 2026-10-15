@@ -9,10 +9,12 @@ from app.auth.schemas import AccessToken
 from app.core.config import get_settings
 from app.users.schemas import UserRead
 
-auth_router = APIRouter(tags=["auth"], prefix="/auth")
-
 settings = get_settings()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_v1_prefix}/auth/login")
+auth_router = APIRouter(tags=["auth"], prefix=settings.api_v1_auth_prefix)
+
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.api_v1_prefix}/{settings.api_v1_auth_prefix}/login"
+)
 
 
 @auth_router.post("/login")
@@ -48,7 +50,10 @@ async def logout(
     response: Response,
     refresh_token: Annotated[str | None, Cookie()] = None,
 ) -> None:
-    pass
+    try:
+        await service.logout(response, refresh_token)
+    except InvalidRefreshToken as err:
+        raise HTTPException(status_code=err.status_code, detail=err.message) from err
 
 
 @auth_router.get("/me")

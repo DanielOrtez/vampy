@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     environment: Literal["dev", "prod"] = "prod"
 
     api_v1_prefix: str = "/api/v1"
+    api_v1_auth_prefix: str = "/auth"
 
     postgres_user: str
     postgres_password: str

@@ -56,8 +56,11 @@ class AuthService:
     ) -> None:
         token = await self._manage_refresh(refresh_token)
 
-        response.delete_cookie("refresh_token")
         await self.repository.revoke_refresh_token_family(token.family_id)
+        response.delete_cookie(
+            "refresh_token",
+            path=f"{self.settings.api_v1_prefix}{self.settings.api_v1_auth_prefix}",
+        )
 
     async def refresh_token(self, refresh_token: str | None = None) -> Tokens:
         token = await self._manage_refresh(refresh_token)
@@ -78,6 +81,8 @@ class AuthService:
             httponly=True,
             secure=self.settings.is_production,
             samesite="strict",
+            max_age=self.settings.refresh_token_days * 24 * 60 * 60,
+            path=f"{self.settings.api_v1_prefix}{self.settings.api_v1_auth_prefix}",
         )
         return tokens.access_token
 
