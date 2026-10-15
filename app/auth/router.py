@@ -61,8 +61,8 @@ async def logout(
 ) -> None:
     try:
         await service.logout(refresh_token)
-    except InvalidRefreshToken as err:
-        raise HTTPException(status_code=err.status_code, detail=err.message) from err
+    except InvalidRefreshToken:
+        pass
 
     response.delete_cookie(
         "refresh_token",
