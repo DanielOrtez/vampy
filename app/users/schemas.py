@@ -1,15 +1,22 @@
 import uuid
 
-from pydantic import BaseModel, EmailStr
+from pydantic import EmailStr
 
-from app.core.common.schemas import ResponseSchema
+from app.core.common.schemas import BaseSchema
 
 
-class UserCreate(BaseModel):
+class UserEmailMixin:
     email: EmailStr
+
+
+class UserCreate(UserEmailMixin, BaseSchema):
     password: str
 
 
-class UserRead(ResponseSchema):
+class UserPrivate(UserEmailMixin, BaseSchema):
     id: uuid.UUID
-    email: EmailStr
+    password: str
+
+
+class UserRead(UserEmailMixin, BaseSchema):
+    id: uuid.UUID

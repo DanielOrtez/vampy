@@ -44,7 +44,7 @@ def create_app() -> FastAPI:
         )
 
     @api.get("/ready")
-    async def read_root(session: AsyncSessionDep):
+    async def read_root(session: AsyncSessionDep) -> dict[str, str]:
         await session.execute(text("SELECT 1"))
         return {"status": "ready!"}
 

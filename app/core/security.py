@@ -41,8 +41,10 @@ class JWTHelper:
         )
 
     def create_refresh_token(self) -> str:
-        refresh_token = token_urlsafe(32)
-        return hashlib.sha256(refresh_token.encode()).hexdigest()
+        return token_urlsafe(32)
+
+    def hash_refresh_token(self, token: str) -> str:
+        return hashlib.sha256(token.encode()).hexdigest()
 
 
 @lru_cache
