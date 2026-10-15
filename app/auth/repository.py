@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import RefreshToken
@@ -12,7 +12,7 @@ class AuthRepository(BaseRepository[RefreshToken]):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_by_hash(self, token_hash: str):
+    async def get_by_hash(self, token_hash: str) -> RefreshToken | None:
         stmt = select(RefreshToken).where(RefreshToken.token_hash == token_hash)
         return await self.session.scalar(stmt)
 
@@ -32,3 +32,22 @@ class AuthRepository(BaseRepository[RefreshToken]):
             token.family_id = family_id
         refresh_token = await self.create(token)
         return refresh_token.token_hash
+
+    async def revoke_refresh_token(self, token_id: uuid.UUID) -> None:
+        stmt = (
+            update(RefreshToken)
+            .where(RefreshToken.id == token_id)
+            .values(revoked_at=datetime.now(UTC))
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def revoke_refresh_token_family(self, family_id: uuid.UUID) -> None:
+        stmt = (
+            update(RefreshToken)
+            .where(RefreshToken.family_id == family_id)
+            .where(RefreshToken.revoked_at.is_(None))
+            .values(expires_at=datetime.now(UTC))
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()

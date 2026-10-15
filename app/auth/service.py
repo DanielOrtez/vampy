@@ -2,9 +2,10 @@ import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
 
+from fastapi import Response
 from pydantic import EmailStr
 
-from app.auth.exceptions import InvalidCredentials
+from app.auth.exceptions import InvalidCredentials, InvalidRefreshToken
 from app.auth.repository import AuthRepository
 from app.auth.schemas import AccessToken, Tokens
 from app.core.config import get_settings
@@ -31,7 +32,35 @@ class AuthService:
 
         return await self._issue_tokens(user.id)
 
-    async def _issue_tokens(self, user_id: uuid.UUID) -> Tokens:
+    async def refresh_token(self, refresh_token: str) -> Tokens:
+        token = await self.repository.get_by_hash(
+            self.jwt.hash_refresh_token(refresh_token)
+        )
+        if not token or token.expires_at < datetime.now(UTC):
+            raise InvalidRefreshToken()
+
+        if token.revoked_at:
+            await self.repository.revoke_refresh_token_family(token.family_id)
+            raise InvalidRefreshToken()
+
+        await self.repository.revoke_refresh_token(token.id)
+        return await self._issue_tokens(
+            user_id=token.user_id, family_id=token.family_id
+        )
+
+    def build_response(self, tokens: Tokens, response: Response):
+        response.set_cookie(
+            "refresh_token",
+            tokens.refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+        )
+        return tokens.access_token
+
+    async def _issue_tokens(
+        self, user_id: uuid.UUID, family_id: uuid.UUID | None = None
+    ) -> Tokens:
         access_token = AccessToken(
             access_token=self.jwt.create_access_token(user_id),
             expires_in=self.settings.access_token_minutes * 60,
@@ -44,5 +73,6 @@ class AuthService:
             user_id=user_id,
             token_hash=self.jwt.hash_refresh_token(refresh_token),
             expires_at=expires_at,
+            family_id=family_id,
         )
         return Tokens(access_token=access_token, refresh_token=refresh_token)

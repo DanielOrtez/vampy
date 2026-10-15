@@ -1,10 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from app.auth.dependency import AuthServiceDep
-from app.auth.exceptions import InvalidCredentials
+from app.auth.exceptions import InvalidCredentials, InvalidRefreshToken
 from app.auth.schemas import AccessToken
 from app.core.config import get_settings
 
@@ -23,16 +23,20 @@ async def login(
     try:
         tokens = await service.login(form.username, form.password)
     except InvalidCredentials as err:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=err.detail)
+        raise HTTPException(status_code=err.status_code) from err
+    return service.build_response(tokens, response)
 
-    response.set_cookie(
-        "vam:refresh_token",
-        tokens.refresh_token,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-    )
-    return tokens.access_token
+
+@auth_router.post("/refresh")
+async def refresh(
+    refresh_token: Annotated[str, Cookie()], service: AuthServiceDep, response: Response
+) -> AccessToken:
+    try:
+        tokens = await service.refresh_token(refresh_token)
+    except InvalidRefreshToken as err:
+        raise HTTPException(status_code=err.status_code) from err
+
+    return service.build_response(tokens, response)
 
 
 @auth_router.get("/me")
