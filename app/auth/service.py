@@ -3,9 +3,14 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 from fastapi import Response
+from jwt import PyJWTError
 from pydantic import EmailStr
 
-from app.auth.exceptions import InvalidCredentials, InvalidRefreshToken
+from app.auth.exceptions import (
+    InvalidAccessToken,
+    InvalidCredentials,
+    InvalidRefreshToken,
+)
 from app.auth.repository import AuthRepository
 from app.auth.schemas import AccessToken, Tokens
 from app.core.config import get_settings
@@ -31,6 +36,18 @@ class AuthService:
             raise InvalidCredentials()
 
         return await self._issue_tokens(user.id)
+
+    async def authenticate(self, token: str):
+        try:
+            decoded = self.jwt.decode_access_token(token)
+        except PyJWTError:
+            raise InvalidAccessToken()
+
+        user = await self.users.get_user(decoded.sub)
+        if not user:
+            raise InvalidCredentials()
+
+        return user
 
     async def refresh_token(self, refresh_token: str) -> Tokens:
         token = await self.repository.get_by_hash(

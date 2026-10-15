@@ -6,10 +6,21 @@ class AuthException(Exception):
 
 
 class InvalidCredentials(AuthException):
+    message: str = "Invalid credentials."
+
     def __init__(self):
-        super().__init__("Invalid credentials.")
+        super().__init__(self.message)
+
+
+class InvalidAccessToken(AuthException):
+    message: str = "Invalid access token."
+
+    def __init__(self):
+        super().__init__(self.message)
 
 
 class InvalidRefreshToken(AuthException):
+    message: str = "Invalid refresh token."
+
     def __init__(self):
-        super().__init__("Invalid refresh token.")
+        super().__init__(self.message)

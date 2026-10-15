@@ -8,6 +8,7 @@ import jwt
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 
+from app.auth.schemas import DecodedToken
 from app.core.config import get_settings
 
 
@@ -40,13 +41,14 @@ class JWTHelper:
             payload, self.settings.secret_key, algorithm=self.settings.algorithm
         )
 
-    def decode_access_token(self, token: str) -> dict:
-        return jwt.decode(
+    def decode_access_token(self, token: str) -> DecodedToken:
+        decoded = jwt.decode(
             token,
             self.settings.secret_key,
             [self.settings.algorithm],
             leeway=self.settings.leeway_seconds,
         )
+        return DecodedToken(**decoded)
 
     def create_refresh_token(self) -> str:
         return token_urlsafe(32)
