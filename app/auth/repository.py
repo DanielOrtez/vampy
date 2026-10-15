@@ -47,7 +47,7 @@ class AuthRepository(BaseRepository[RefreshToken]):
             update(RefreshToken)
             .where(RefreshToken.family_id == family_id)
             .where(RefreshToken.revoked_at.is_(None))
-            .values(expires_at=datetime.now(UTC))
+            .values(revoked_at=datetime.now(UTC))
         )
         await self.session.execute(stmt)
         await self.session.commit()

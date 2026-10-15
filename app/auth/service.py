@@ -11,10 +11,12 @@ from app.auth.exceptions import (
     InvalidCredentials,
     InvalidRefreshToken,
 )
+from app.auth.models import RefreshToken
 from app.auth.repository import AuthRepository
 from app.auth.schemas import AccessToken, Tokens
 from app.core.config import get_settings
 from app.core.security import JWTHelper, get_password_helper
+from app.users.schemas import UserRead
 from app.users.service import UserService
 
 
@@ -37,7 +39,7 @@ class AuthService:
 
         return await self._issue_tokens(user.id)
 
-    async def authenticate(self, token: str):
+    async def authenticate(self, token: str) -> UserRead:
         try:
             decoded = self.jwt.decode_access_token(token)
         except PyJWTError:
@@ -45,40 +47,51 @@ class AuthService:
 
         user = await self.users.get_user(decoded.sub)
         if not user:
-            raise InvalidCredentials()
+            raise InvalidAccessToken()
 
         return user
 
-    async def refresh_token(self, refresh_token: str) -> Tokens:
-        token = await self.repository.get_by_hash(
-            self.jwt.hash_refresh_token(refresh_token)
-        )
-        now = datetime.now(UTC)
+    async def logout(
+        self, response: Response, refresh_token: str | None = None
+    ) -> None:
+        token = await self._manage_refresh(refresh_token)
 
-        if not token or token.expires_at < now:
-            raise InvalidRefreshToken()
+        response.delete_cookie("refresh_token")
+        await self.repository.revoke_refresh_token_family(token.family_id)
 
-        if (
-            token.revoked_at
-            and token.revoked_at + timedelta(seconds=self.settings.leeway_seconds) < now
-        ):
+    async def refresh_token(self, refresh_token: str | None = None) -> Tokens:
+        token = await self._manage_refresh(refresh_token)
+        if token.revoked_at:
             await self.repository.revoke_refresh_token_family(token.family_id)
             raise InvalidRefreshToken()
 
         await self.repository.revoke_refresh_token(token.id)
+
         return await self._issue_tokens(
             user_id=token.user_id, family_id=token.family_id
         )
 
-    def build_response(self, tokens: Tokens, response: Response):
+    def build_response(self, tokens: Tokens, response: Response) -> AccessToken:
         response.set_cookie(
             "refresh_token",
             tokens.refresh_token,
             httponly=True,
-            secure=True,
+            secure=self.settings.is_production,
             samesite="strict",
         )
         return tokens.access_token
+
+    async def _manage_refresh(self, refresh_token: str | None = None) -> RefreshToken:
+        if not refresh_token:
+            raise InvalidRefreshToken()
+
+        token = await self.repository.get_by_hash(
+            self.jwt.hash_refresh_token(refresh_token)
+        )
+        if not token or token.expires_at < datetime.now(UTC):
+            raise InvalidRefreshToken()
+
+        return token
 
     async def _issue_tokens(
         self, user_id: uuid.UUID, family_id: uuid.UUID | None = None

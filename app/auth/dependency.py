@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 
-from app.auth.exceptions import InvalidCredentials
+from app.auth.exceptions import InvalidAccessToken, InvalidCredentials
 from app.auth.repository import AuthRepository
 from app.auth.service import AuthService
 from app.core.config import get_settings
@@ -30,7 +30,7 @@ async def get_current_user(
 ) -> UserRead:
     try:
         return await service.authenticate(token)
-    except InvalidCredentials as err:
+    except (InvalidCredentials, InvalidAccessToken) as err:
         raise HTTPException(status_code=err.status_code) from err
 
 

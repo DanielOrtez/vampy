@@ -30,7 +30,9 @@ async def login(
 
 @auth_router.post("/refresh")
 async def refresh(
-    refresh_token: Annotated[str, Cookie()], service: AuthServiceDep, response: Response
+    service: AuthServiceDep,
+    response: Response,
+    refresh_token: Annotated[str | None, Cookie()] = None,
 ) -> AccessToken:
     try:
         tokens = await service.refresh_token(refresh_token)
@@ -38,6 +40,15 @@ async def refresh(
         raise HTTPException(status_code=err.status_code, detail=err.message) from err
 
     return service.build_response(tokens, response)
+
+
+@auth_router.post("/logout")
+async def logout(
+    service: AuthServiceDep,
+    response: Response,
+    refresh_token: Annotated[str | None, Cookie()] = None,
+) -> None:
+    pass
 
 
 @auth_router.get("/me")
