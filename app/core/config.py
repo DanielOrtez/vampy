@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     debug: bool = False
     environment: Literal["dev", "prod"] = "prod"
 
+    api_v1_prefix: str = "/api/v1"
+
     postgres_user: str
     postgres_password: str
     postgres_host: str = "127.0.0.1"

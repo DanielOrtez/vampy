@@ -1,7 +1,7 @@
 import hashlib
 import uuid
 from datetime import UTC, datetime, timedelta
-from functools import lru_cache
+from functools import cache
 from secrets import token_urlsafe
 
 import jwt
@@ -47,11 +47,6 @@ class JWTHelper:
         return hashlib.sha256(token.encode()).hexdigest()
 
 
-@lru_cache
+@cache
 def get_password_helper() -> PasswordHelper:
     return PasswordHelper()
-
-
-@lru_cache
-def get_jwt_helper() -> JWTHelper:
-    return JWTHelper()

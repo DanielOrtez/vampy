@@ -8,7 +8,7 @@ from app.auth.exceptions import InvalidCredentials
 from app.auth.repository import AuthRepository
 from app.auth.schemas import AccessToken, Tokens
 from app.core.config import get_settings
-from app.core.security import get_jwt_helper, get_password_helper
+from app.core.security import JWTHelper, get_password_helper
 from app.users.service import UserService
 
 
@@ -17,7 +17,7 @@ class AuthService:
         self.users = users
         self.repository = repository
         self.pwd = get_password_helper()
-        self.jwt = get_jwt_helper()
+        self.jwt = JWTHelper()
         self.settings = get_settings()
 
     async def login(self, email: EmailStr, password: str) -> Tokens:
@@ -32,7 +32,10 @@ class AuthService:
         return await self._issue_tokens(user.id)
 
     async def _issue_tokens(self, user_id: uuid.UUID) -> Tokens:
-        access_token = AccessToken(token=self.jwt.create_access_token(user_id))
+        access_token = AccessToken(
+            access_token=self.jwt.create_access_token(user_id),
+            expires_in=self.settings.access_token_minutes * 60,
+        )
         refresh_token = self.jwt.create_refresh_token()
         expires_at = datetime.now(UTC) + timedelta(
             days=self.settings.refresh_token_days

@@ -4,8 +4,9 @@ from pydantic import BaseModel
 
 
 class AccessToken(BaseModel):
-    token: str
-    token_type: Literal["bearer"] = "bearer"
+    access_token: str
+    expires_in: int
+    token_type: Literal["Bearer"] = "Bearer"
 
 
 class Tokens(BaseModel):
