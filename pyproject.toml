@@ -8,6 +8,7 @@ dependencies = [
     "alembic>=1.20.0",
     "asyncpg>=0.32.0",
     "fastapi[standard]>=0.143.0",
+    "httpx2>=2.13.1",
     "pwdlib[argon2]>=0.3.1",
     "pydantic>=2.14.1",
     "pydantic-settings>=2.15.0",
@@ -17,9 +18,14 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "ruff>=0.17.0",
     "ty>=0.0.86",
 ]
+
+[tool.fastapi]
+entrypoint = "app.main:app"
 
 [tool.ruff]
 exclude = ["**/versions/**"]
@@ -32,3 +38,8 @@ fixable = ["ALL"]
 "__init__.py" = ["F401"]
 "tests/*" = ["ARG", "S101"]
 "alembic/*" = ["ERA001"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
