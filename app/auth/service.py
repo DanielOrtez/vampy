@@ -15,7 +15,7 @@ from app.auth.repository import AuthRepository
 from app.auth.schemas import AccessToken, Tokens
 from app.core.config import get_settings
 from app.core.security import JWTHelper, get_password_helper
-from app.users.schemas import UserRead
+from app.users.models import User
 from app.users.service import UserService
 
 
@@ -38,7 +38,7 @@ class AuthService:
 
         return await self._issue_tokens(user.id)
 
-    async def authenticate(self, token: str) -> UserRead:
+    async def authenticate(self, token: str) -> User:
         try:
             decoded = self.jwt.decode_access_token(token)
         except PyJWTError:

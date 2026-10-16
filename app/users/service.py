@@ -5,8 +5,9 @@ from pydantic import EmailStr
 
 from app.core.security import get_password_helper
 from app.users.exceptions import EmailAlreadyExistsError, UserNotFoundError
+from app.users.models import User
 from app.users.repository import UserRepository
-from app.users.schemas import UserCreate, UserPrivate, UserRead
+from app.users.schemas import UserCreate
 
 
 class UserService:
@@ -14,18 +15,18 @@ class UserService:
         self.repository = repository
         self.hasher = get_password_helper()
 
-    async def get_user(self, id: uuid.UUID) -> UserRead:
+    async def get_user(self, id: uuid.UUID) -> User:
         user = await self.repository.get_by_id(id)
         if not user:
             raise UserNotFoundError(user_id=id)
-        return UserRead.model_validate(user)
+        return user
 
-    async def get_user_by_email(self, email: EmailStr) -> UserPrivate | None:
+    async def get_user_by_email(self, email: EmailStr) -> User | None:
         user = await self.repository.get_by_email(email)
 
-        return UserPrivate.model_validate(user) if user else None
+        return user
 
-    async def create_user(self, data: UserCreate) -> UserRead:
+    async def create_user(self, data: UserCreate) -> User:
         exists = await self.repository.get_by_email(data.email)
         if exists:
             raise EmailAlreadyExistsError()
@@ -36,4 +37,4 @@ class UserService:
         data.password = hashed_password
         user = await self.repository.create_user(data)
 
-        return UserRead.model_validate(user)
+        return user

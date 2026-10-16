@@ -29,7 +29,8 @@ AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)], service: AuthServiceDep
 ) -> UserRead:
-    return await service.authenticate(token)
+    user = await service.authenticate(token)
+    return UserRead.model_validate(user)
 
 
 CurrentUser = Annotated[UserRead, Depends(get_current_user)]
