@@ -1,15 +1,17 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.api import main_router
 from app.core import database
 from app.core.config import get_settings
 from app.core.database import AsyncSessionDep
+from app.core.exceptions import VAMException
 
 
 @asynccontextmanager
@@ -31,6 +33,12 @@ def create_app() -> FastAPI:
         redoc_url="/redoc" if not settings.is_production else None,
         openapi_url="/openapi.json" if not settings.is_production else None,
     )
+
+    @api.exception_handler(VAMException)
+    async def auth_exception_handler(
+        request: Request, exc: VAMException
+    ) -> JSONResponse:
+        return JSONResponse(status_code=exc.status_code, content=exc.to_content())
 
     api.add_middleware(GZipMiddleware, minimum_size=1000)
 

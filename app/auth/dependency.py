@@ -1,9 +1,8 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 
-from app.auth.exceptions import InvalidAccessToken, InvalidCredentials
 from app.auth.repository import AuthRepository
 from app.auth.service import AuthService
 from app.core.config import get_settings
@@ -30,10 +29,7 @@ AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)], service: AuthServiceDep
 ) -> UserRead:
-    try:
-        return await service.authenticate(token)
-    except (InvalidCredentials, InvalidAccessToken) as err:
-        raise HTTPException(status_code=err.status_code, detail=err.message) from err
+    return await service.authenticate(token)
 
 
 CurrentUser = Annotated[UserRead, Depends(get_current_user)]

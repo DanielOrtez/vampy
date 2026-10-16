@@ -22,6 +22,7 @@ class UserService:
 
     async def get_user_by_email(self, email: EmailStr) -> UserPrivate | None:
         user = await self.repository.get_by_email(email)
+
         return UserPrivate.model_validate(user) if user else None
 
     async def create_user(self, data: UserCreate) -> UserRead:
