@@ -11,9 +11,9 @@ class User(TimeStampedModelMixin, Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        primary_key=True, server_default=func.uuidv7(monotonic=True), index=True
+        primary_key=True, server_default=func.uuidv7(monotonic=True)
     )
-    email: Mapped[str] = mapped_column(unique=True, index=True)
+    email: Mapped[str] = mapped_column(unique=True)
     password: Mapped[str]
 
     def __repr__(self) -> str:

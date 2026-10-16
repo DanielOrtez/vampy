@@ -11,7 +11,7 @@ class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        primary_key=True, server_default=func.uuidv7(monotonic=True), index=True
+        primary_key=True, server_default=func.uuidv7(monotonic=True)
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
